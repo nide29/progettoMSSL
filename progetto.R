@@ -61,7 +61,7 @@ plot(density(airbnb_numerico$price))
 summary(airbnb_numerico$price)
 
 
-
+seed(123)
 
 
 
