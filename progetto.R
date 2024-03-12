@@ -7,7 +7,8 @@ library(tidyverse)
 library(corrplot)
 
 # Lettura del dataset (AirBnb Data)
-#file_path_V <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
+file_path <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
+file_path_A <- "/Users/alessandro/Library/CloudStorage/OneDrive-UniversitàdellaCalabria/Alex/Università/Magistrale/1 ANNO/Modelli Statistici e Statistical Learning/progetto/AB_NYC_2019.csv"
 airbnb <- read.csv(file_path)
 
 dim(airbnb) #mostra la dimensione del dataset
@@ -52,7 +53,7 @@ airbnb_numerico <- subset(airbnb, select = -c(name, host_name, neighbourhood_gro
 
 # matrice di correlazione
 matrice_correlazione <- cor(airbnb_numerico)
-corrplot(matrice_correlazione, method = "number")
+corrplot(matrice_correlazione, method = "circle")
 
 # istogramma della variabile dipendente price
 hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
