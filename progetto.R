@@ -46,10 +46,28 @@ airbnb <- cbind(airbnb,
 dim(airbnb)
 head(airbnb)
 
+# sostituiamo le celle NA in celle contenente il valore zero
 airbnb[is.na(airbnb)] <- 0
 head(airbnb)
 
-airbnb_numerico <- subset(airbnb, select = -c(name, host_name, neighbourhood_group, neighbourhood, room_type, last_review))
+# rimuoviamo le celle contenenti prezzo pari a zero
+airbnb <- airbnb[airbnb$price != 0, ]
+
+
+# creiamo un nuovo dataframe in cui sono presenti solamente gli attributi significativi per la nostra analisi
+airbnb_numerico <- subset(airbnb, select = -c(id, host_id, latitude, longitude, name, host_name, neighbourhood_group, neighbourhood, room_type, last_review))
+
+# combattiamo la trappola delle dummy
+airbnb_dummytrap <- subset(airbnb_numerico, select = -c(NB_manhattan, RM_entire))
+matrice_correlazione <- cor(airbnb_dummytrap)
+corrplot(matrice_correlazione, method = "circle")
+
+#modello lineare
+model <- lm(formula = airbnb_dummytrap$price ~ ., data = airbnb_dummytrap)
+summary(model)
+
+
+
 
 # matrice di correlazione
 matrice_correlazione <- cor(airbnb_numerico)
