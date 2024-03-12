@@ -67,8 +67,6 @@ model <- lm(formula = airbnb_dummytrap$price ~ ., data = airbnb_dummytrap)
 summary(model)
 
 
-
-
 # matrice di correlazione
 matrice_correlazione <- cor(airbnb_numerico)
 corrplot(matrice_correlazione, method = "circle")
@@ -78,33 +76,3 @@ hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
 boxplot(airbnb_numerico$price)
 plot(density(airbnb_numerico$price))
 summary(airbnb_numerico$price)
-
-
-seed(123)
-
-
-
-
-
-###########################################################################################################
-## da qui in poi ha detto tutto gemini, e noi non ci fidiamo mica tanto
-
-# Distribuzione delle variabili numeriche
-lapply(airbnb[, sapply(airbnb, is.numeric)], hist)
-
-# Controllo per outliers
-boxplot(airbnb[, sapply(airbnb, is.numeric)])
-
-# Calcolo della matrice di correlazione
-correlations <- cor(airbnb[, sapply(airbnb, is.numeric)])
-
-# Visualizzazione della matrice di correlazione
-corrplot(correlations, method = "number") #method = "color" se vuoi i quadratini oppure "circle" è carino
-
-# Identificazione di correlazioni elevate (soglia > 0.7)
-corr_matrix <- abs(correlations) > 0.7
-corr_matrix[upper.tri(corr_matrix)] <- FALSE
-colnames(airbnb)[colSums(corr_matrix) > 1]
-
-# Visualizzazione delle correlazioni per coppia di variabili
-pairs(airbnb[, sapply(airbnb, is.numeric)])
