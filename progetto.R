@@ -66,7 +66,6 @@ corrplot(matrice_correlazione, method = "circle")
 model <- lm(formula = airbnb_dummytrap$price ~ ., data = airbnb_dummytrap)
 summary(model)
 
-
 # matrice di correlazione
 matrice_correlazione <- cor(airbnb_numerico)
 corrplot(matrice_correlazione, method = "circle")
