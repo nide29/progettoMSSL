@@ -5,6 +5,7 @@
 # Caricamento delle librerie utili per l'analisi
 library(tidyverse)
 library(corrplot)
+library(car)
 
 # Lettura del dataset (AirBnb Data)
 file_path <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
@@ -62,7 +63,13 @@ airbnb_dummytrap <- subset(airbnb_numerico, select = -c(NB_manhattan, RM_entire)
 matrice_correlazione <- cor(airbnb_dummytrap)
 corrplot(matrice_correlazione, method = "circle")
 
-#modello lineare
+# istogramma della variabile dipendente price
+hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
+boxplot(airbnb_numerico$price)
+plot(density(airbnb_numerico$price))
+summary(airbnb_numerico$price)
+
+#modello lineare che tiene in considerazione tutti i regressori
 model <- lm(formula = airbnb_dummytrap$price ~ ., data = airbnb_dummytrap)
 summary(model)
 
@@ -70,8 +77,23 @@ summary(model)
 matrice_correlazione <- cor(airbnb_numerico)
 corrplot(matrice_correlazione, method = "circle")
 
-# istogramma della variabile dipendente price
-hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
-boxplot(airbnb_numerico$price)
-plot(density(airbnb_numerico$price))
-summary(airbnb_numerico$price)
+# determinante della matrice XtX
+X <- as.matrix(cbind(rep(1, nrow(airbnb_dummytrap)), airbnb_dummytrap$minimum_nights, airbnb_dummytrap$number_of_reviews, airbnb_dummytrap$reviews_per_month, airbnb_dummytrap$calculated_host_listings_count, airbnb_dummytrap$availability_365, airbnb_dummytrap$NB_brooklyn, airbnb_dummytrap$NB_queens, airbnb_dummytrap$NB_statenisland, airbnb_dummytrap$NB_bronx, airbnb_dummytrap$RM_private, airbnb_dummytrap$RM_shared))
+determinante <- det(t(X) %*% X)
+print(determinante)
+
+# conditional number
+autoval<-eigen(t(X)%*%X)
+condition.number<-sqrt(max(autoval$values)/min(autoval$values))
+print(autoval$values)
+print(autoval$vectors)
+print(condition.number)
+print(max(autoval$values))
+print(min(autoval$values))
+
+# calcolo del VIF
+vif(model)
+
+# calcolo della Tolleranza
+toleranceValue <- 1/vif(model)
+print(toleranceValue)
