@@ -6,6 +6,7 @@
 library(tidyverse)
 library(corrplot)
 library(car)
+library(lmtest)
 
 # Lettura del dataset (AirBnb Data)
 file_path <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
@@ -97,3 +98,18 @@ vif(model)
 # calcolo della Tolleranza
 toleranceValue <- 1/vif(model)
 print(toleranceValue)
+
+#Verifica della presenza dell'eteroschedasticità dal punto di vista grafico
+residui <- residuals(model)
+ordinate_stimate <- fitted(model)
+
+
+# Crea il grafico dei residui rispetto alle ordinate stimate
+plot(ordinate_stimate, residui,
+     xlab = "Ordinate stimate",
+     ylab = "Residui",
+     main = "Grafico dei residui rispetto alle ordinate stimate")
+
+# Test di Breusch-Pagan
+bp_test <- bptest(model)
+print(bp_test)
