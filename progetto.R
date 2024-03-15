@@ -97,3 +97,9 @@ vif(model)
 # calcolo della Tolleranza
 toleranceValue <- 1/vif(model)
 print(toleranceValue)
+
+# TODO ETEROSESSUALITA'
+#Verifica della presenza dell'eteroschedasticità
+resmodel1 <- resid(model)
+fitresmodel1 <- fitted(model)
+plot(fitresmodel1, resmodel1)
