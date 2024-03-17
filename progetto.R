@@ -122,11 +122,12 @@ fit1<-fitted(model); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
-# Alternativa: Trasformazione logaritmica alla variabile dipendente
+# Trasformazione logaritmica alla variabile dipendente
 model_log_lin <- lm(formula = log(airbnb_dummy$price) ~ ., data = airbnb_dummy)
+
 #Nota: Con la trasf logaritmica alla variabile dipendente il modello migliora in termini di R squared e adj- r squared
 
-#Verifica della presenza dell'eteroschedasticità dal punto di vista grafico
+#Verifica della presenza dell'eteroschedasticità dal punto di vista grafico 2
 residui_log <- residuals(model_log_lin)
 log_fitted <- fitted(model_log_lin)
 
@@ -166,23 +167,195 @@ modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
 #A questo punto bisogna pesare il modello per ogni regressore e cercare di eliminare l'eteroschedasticità
-
-#Modello pesato per il regressore
 wAirbnb_regressor <- airbnb_dummy
-wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
-summary(modello_pesato_mn)
+
+#Modello pesato per il regressore minimum_nights
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$minimum_nights)
+summary(wModel_regressor)
 
 
-# Test di Breusch-Pagan per il modello pesato 
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore minimum nights
 res1 <- residuals(wModel_regressor); res12<- res1^2
-modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$minimum_nights)
 summary(modBPtest)
 
-#Test di White per il modello pesato 
+#Test di White per il modello pesato  rispetto al regressore minimum nights
 fit1<-fitted(wModel_regressor); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
+#---
+
+#Modello pesato per il regressore number_of_reviews
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$number_of_reviews)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore minimum nights
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$number_of_reviews)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore minimum nights
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore reviews_per_month
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$reviews_per_month)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore reviews_per_month
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$reviews_per_month)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore reviews_per_month
+fit1<-fitted(wModel_regressor3); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore calculated_host_listings_count
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore calculated_host_listings_count
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore calculated_host_listings_count
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore availability_365
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$availability_365)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore availability_365
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore availability_365
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_brooklyn
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_brooklyn)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_brooklyn
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_brooklyn)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_brooklyn
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_queens
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_queens
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_queens
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore NB_statenisland
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_statenisland)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_statenisland
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_statenisland)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_statenisland
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_bronx
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_bronx)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_bronx
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_bronx)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_bronx
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore RM_private
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_private)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore RM_private
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_private)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore RM_private
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore RM_shared
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_shared)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore RM_shared
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_shared)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore RM_shared
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
 
 
 
