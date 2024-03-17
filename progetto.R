@@ -111,5 +111,19 @@ plot(ordinate_stimate, residui,
      main = "Grafico dei residui rispetto alle ordinate stimate")
 
 # Test di Breusch-Pagan
-bp_test <- bptest(model)
-print(bp_test)
+res1 <- residuals(model); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = airbnb_dummytrap)
+summary(modBPtest)
+
+#Test di White
+fit1<-fitted(model); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+# Alternativa: Trasformazione logaritmica alla variabile dipendente
+model_log_lin <- lm(formula = log(airbnb_dummytrap$price) ~ ., data = airbnb_dummytrap)
+
+#TODO: applicazione modello log-lin e ripetizione bp e w test su quel modello, 
+#se ancora presente eteroschedasticità si deve procedere al modello pesato per le ordinate stimate(i regressori vengono divisi per le ordinate stimate)
+#ripetere bp e w test sul modello pesato ...
+#se ancora presente si passa a un modello pesato per i regressori
