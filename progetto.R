@@ -75,7 +75,7 @@ model <- lm(formula = airbnb_dummy$price ~ ., data = airbnb_dummy)
 summary(model)
 
 # matrice di correlazione
-matrice_correlazione <- cor(airbnb_numerico)
+matrice_correlazione <- cor(airbnb_dummy)
 corrplot(matrice_correlazione, method = "circle")
 
 # determinante della matrice XtX
@@ -357,7 +357,15 @@ fit1<-fitted(wModel_regressor); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
+#RIDGE REGRESSION
+library(glmnet)
+print(airbnb_dummy)
+X<-as.matrix(airbnb_dummy[,-12])
+y <- airbnb_dummy$price
 
+rr= glmnet (X, y, alpha=0, standardize=FALSE)
+print(rr)
+plot(rr, main = "Ridge regression", xvar = "lambda", label = TRUE)
 
 #TODO: 
-#se ancora presente si passa a un modello pesato per i regressori
+#Metodi di regolarizzazione
