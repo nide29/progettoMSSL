@@ -124,6 +124,7 @@ summary(modWtest)
 
 # Trasformazione logaritmica alla variabile dipendente
 model_log_lin <- lm(formula = log(airbnb_dummy$price) ~ ., data = airbnb_dummy)
+summary(model_log_lin)
 
 #Nota: Con la trasf logaritmica alla variabile dipendente il modello migliora in termini di R squared e adj- r squared
 
@@ -214,7 +215,7 @@ modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_
 summary(modBPtest)
 
 #Test di White per il modello pesato  rispetto al regressore reviews_per_month
-fit1<-fitted(wModel_regressor3); fit12<-fit1^2
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
@@ -359,13 +360,35 @@ summary(modWtest)
 
 #RIDGE REGRESSION
 library(glmnet)
-print(airbnb_dummy)
+set.seed(123) 
+
 X<-as.matrix(airbnb_dummy[,-12])
+
+print(X)
 y <- airbnb_dummy$price
 
-rr= glmnet (X, y, alpha=0, standardize=FALSE)
-print(rr)
-plot(rr, main = "Ridge regression", xvar = "lambda", label = TRUE)
+rr = glmnet (X, y, alpha=0, standardize=FALSE)
+plot(rr, main = "Ridge regression", xvar = "lambda", ylim = c(0,5))
 
+#La stima del modello ridge risultante
+coefficients <- coef(rr, exact = TRUE)
+print(coefficients[,1])
+
+#Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
+# Creazione del modello con cross-validation attraverso la funzione cv di glmnet
+
+crossval_model <- cv.glmnet(X, y, nfolds = 10, alpha = 0) 
+plot(crossval_model)
+best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
+print(paste("Best Lambda:", best_lambda))
+
+# Addestramento del modello ridge finale con il miglior lambda
+min_mse <- min(crossval_model$cvm)
+print(min_mse)
+final_model <- glmnet(X, y, nfolds=10, alpha = 0, lambda = best_lambda)
+
+#La stima del modello ridge risultante
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
 #TODO: 
 #Metodi di regolarizzazione
