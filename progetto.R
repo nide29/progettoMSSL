@@ -56,6 +56,8 @@ head(airbnb)
 airbnb <- airbnb[airbnb$price != 0, ]
 
 
+
+
 # creiamo un nuovo dataframe in cui sono presenti solamente gli attributi significativi per la nostra analisi
 airbnb_numerico <- subset(airbnb, select = -c(id, host_id, latitude, longitude, name, host_name, neighbourhood_group, neighbourhood, room_type, last_review))
 
@@ -64,12 +66,35 @@ airbnb_dummy <- subset(airbnb_numerico, select = -c(NB_manhattan, RM_entire))
 matrice_correlazione <- cor(airbnb_dummy)
 corrplot(matrice_correlazione, method = "circle")
 
-# istogramma della variabile dipendente price
-hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
-boxplot(airbnb_numerico$price)
-plot(density(airbnb_numerico$price))
-summary(airbnb_numerico$price)
+#PROCESSO DI RIMOZIONE OUTLIERS
 
+# (variabile dipendente) price
+summary(airbnb_numerico$price)
+hist(airbnb_numerico$price, xlim=c(0,10000), breaks = 200)
+print(max(airbnb_dummy$price)) #10000
+print(mean(airbnb_dummy$price)) #152.7551
+
+# rimuoviamo le celle contenenti prezzo maggiori di 2000 (per ora)
+airbnb <- airbnb[airbnb$price < 2000, ]
+
+#reviews_per_month
+hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
+print(max(airbnb_dummy$reviews_per_month)) #58.5
+print(mean(airbnb_dummy$reviews_per_month)) #1.01
+
+# rimuoviamo le celle contenenti reviews per month maggiori di 10
+airbnb <- airbnb[airbnb$reviews_per_month < 10, ]
+
+#reviews_per_month
+hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
+print(max(airbnb_dummy$reviews_per_month)) #58.5
+print(mean(airbnb_dummy$reviews_per_month)) #1.01
+
+# rimuoviamo le celle contenenti reviews per month maggiori di 10
+airbnb <- airbnb[airbnb$reviews_per_month < 10, ]
+
+
+#---------------------------------------------------------------#
 #modello lineare che tiene in considerazione tutti i regressori
 model <- lm(formula = airbnb_dummy$price ~ ., data = airbnb_dummy)
 summary(model)
@@ -362,21 +387,15 @@ summary(modWtest)
 library(glmnet)
 set.seed(123) 
 
-X<-as.matrix(airbnb_dummy[,-12])
-
-print(X)
+X<-as.matrix(airbnb_dummy[,-1])
 y <- airbnb_dummy$price
+new_grid = 10^seq (5,-4, length = 100)
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
 
-rr = glmnet (X, y, alpha=0, standardize=FALSE)
-plot(rr, main = "Ridge regression", xvar = "lambda", ylim = c(0,5))
-
-#La stima del modello ridge risultante
-coefficients <- coef(rr, exact = TRUE)
-print(coefficients[,1])
+plot(rr, main = "Ridge regression",  xvar = "lambda")
 
 #Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
 # Creazione del modello con cross-validation attraverso la funzione cv di glmnet
-
 crossval_model <- cv.glmnet(X, y, nfolds = 10, alpha = 0) 
 plot(crossval_model)
 best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
@@ -384,11 +403,13 @@ print(paste("Best Lambda:", best_lambda))
 
 # Addestramento del modello ridge finale con il miglior lambda
 min_mse <- min(crossval_model$cvm)
-print(min_mse)
+print(paste("Minimum MSE:", min_mse))
 final_model <- glmnet(X, y, nfolds=10, alpha = 0, lambda = best_lambda)
 
 #La stima del modello ridge risultante
 coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
 print(coefficients[,1])
+
 #TODO: 
+#BOMBARDARE OUTLIERS
 #Metodi di regolarizzazione
