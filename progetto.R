@@ -82,9 +82,6 @@ hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
 print(max(airbnb_dummy$reviews_per_month)) #58.5
 print(mean(airbnb_dummy$reviews_per_month)) #1.01
 
-# rimuoviamo le celle contenenti reviews per month maggiori di 10
-airbnb <- airbnb[airbnb$reviews_per_month < 10, ]
-
 #reviews_per_month
 hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
 print(max(airbnb_dummy$reviews_per_month)) #58.5
