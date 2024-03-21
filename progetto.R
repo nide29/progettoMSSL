@@ -67,30 +67,30 @@ corrplot(matrice_correlazione, method = "circle")
 
 # Calcolo della media e della deviazione standard della variabile dipendente
 mean_value <- mean(airbnb_dummy$price)
-sd_value <- sd(airbnb_dummy$price)
+std_dev <- sd(airbnb_dummy$price)
 
-# Calcolo del limite superiore per gli outliers
-upper_limit <- mean_value + 2 * sd_value
+# Calcolo del limite superiore
+upper_limit <- mean_value + 2 * std_dev
 
 # Identificazione degli outliers
-outliers <- dataset$variable[dataset$variable > upper_limit]
+outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
 
 # Rimozione degli outliers
-clean_dataset <- dataset[dataset$variable <= upper_limit, ]
+airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
 
 
 
 #---------------------------------------------------------------#
 #modello lineare che tiene in considerazione tutti i regressori
-model <- lm(formula = airbnb_dummy$price ~ ., data = airbnb_dummy)
+model <- lm(formula = airbnb_final$price ~ ., data = airbnb_final)
 summary(model)
 
 # matrice di correlazione
-matrice_correlazione <- cor(airbnb_dummy)
+matrice_correlazione <- cor(airbnb_final)
 corrplot(matrice_correlazione, method = "circle")
 
 # determinante della matrice XtX
-X <- as.matrix(cbind(rep(1, nrow(airbnb_dummy)), airbnb_dummy$minimum_nights, airbnb_dummy$number_of_reviews, airbnb_dummy$reviews_per_month, airbnb_dummy$calculated_host_listings_count, airbnb_dummy$availability_365, airbnb_dummy$NB_brooklyn, airbnb_dummy$NB_queens, airbnb_dummy$NB_statenisland, airbnb_dummy$NB_bronx, airbnb_dummy$RM_private, airbnb_dummy$RM_shared))
+X <- as.matrix(cbind(rep(1, nrow(airbnb_final)), airbnb_final$minimum_nights, airbnb_final$number_of_reviews, airbnb_final$reviews_per_month, airbnb_final$calculated_host_listings_count, airbnb_final$availability_365, airbnb_final$NB_brooklyn, airbnb_final$NB_queens, airbnb_final$NB_statenisland, airbnb_final$NB_bronx, airbnb_final$RM_private, airbnb_final$RM_shared))
 determinante <- det(t(X) %*% X)
 print(determinante)
 
@@ -125,7 +125,7 @@ plot(ordinate_stimate, residui,
 
 # Test di Breusch-Pagan
 res1 <- residuals(model); res12<- res1^2
-modBPtest <- lm(formula = res12~ ., data = airbnb_dummy)
+modBPtest <- lm(formula = res12~ ., data = airbnb_final)
 summary(modBPtest)
 
 #Test di White
@@ -134,7 +134,7 @@ modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
 # Trasformazione logaritmica alla variabile dipendente
-model_log_lin <- lm(formula = log(airbnb_dummy$price) ~ ., data = airbnb_dummy)
+model_log_lin <- lm(formula = log(airbnb_final$price) ~ ., data = airbnb_final)
 summary(model_log_lin)
 
 #Nota: Con la trasf logaritmica alla variabile dipendente il modello migliora in termini di R squared e adj- r squared
@@ -151,7 +151,7 @@ plot(log_fitted, residui_log,
 
 # Test di Breusch-Pagan
 res1 <- residuals(model_log_lin); res12<- res1^2
-modBPtest <- lm(formula = res12~ ., data = airbnb_dummy)
+modBPtest <- lm(formula = res12~ ., data = airbnb_final)
 summary(modBPtest)
 
 #Test di White
@@ -160,13 +160,18 @@ modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
 #Procedere al modello pesato per le ordinate stimate(i regressori vengono divisi per le ordinate stimate)
-airbnb_w <- airbnb_dummy
+airbnb_w <- airbnb_final
 
 # Dividere tutti i regressori per le ordinate stimate
 airbnb_w[-1] <- airbnb_w[-1] / fitted(model)
 
 wModel <- lm(formula = price ~ ., data = airbnb_w)
 summary(wModel)
+
+fittedM <- fitted(wModel)
+residui <- residuals(wModel)
+
+plot(fittedM, residui)
 
 # Test di Breusch-Pagan per il modello pesato 
 res1 <- residuals(wModel); res12<- res1^2
@@ -179,7 +184,7 @@ modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
 #A questo punto bisogna pesare il modello per ogni regressore e cercare di eliminare l'eteroschedasticità
-wAirbnb_regressor <- airbnb_dummy
+wAirbnb_regressor <- airbnb_final
 
 #Modello pesato per il regressore minimum_nights
 wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$minimum_nights)
@@ -382,8 +387,8 @@ summary(modWtest)
 library(glmnet)
 set.seed(123) 
 
-X<-as.matrix(airbnb_dummy[,-1])
-y <- airbnb_dummy$price
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
 new_grid = 10^seq (5,-4, length = 100)
 rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
 
@@ -495,5 +500,5 @@ best_elastic <- glmnet(X, y, nflods=10, alpha=0.8, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 #TODO: 
-#BOMBARDARE OUTLIERS
-#Test Metodi di regolarizzazione
+
+
