@@ -65,18 +65,14 @@ corrplot(matrice_correlazione, method = "circle")
 
 #PROCESSO DI RIMOZIONE OUTLIERS
 
-# Calcolo della media e della deviazione standard della variabile dipendente
+#-PRICE - Variabile dipendente
 mean_value <- mean(airbnb_dummy$price)
 std_dev <- sd(airbnb_dummy$price)
-
-# Calcolo del limite superiore
 upper_limit <- mean_value + 2 * std_dev
-
-# Identificazione degli outliers
 outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
-
-# Rimozione degli outliers
 airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
+
+#---
 
 
 
