@@ -55,9 +55,6 @@ head(airbnb)
 # rimuoviamo le celle contenenti prezzo pari a zero
 airbnb <- airbnb[airbnb$price != 0, ]
 
-
-
-
 # creiamo un nuovo dataframe in cui sono presenti solamente gli attributi significativi per la nostra analisi
 airbnb_numerico <- subset(airbnb, select = -c(id, host_id, latitude, longitude, name, host_name, neighbourhood_group, neighbourhood, room_type, last_review))
 
@@ -68,27 +65,19 @@ corrplot(matrice_correlazione, method = "circle")
 
 #PROCESSO DI RIMOZIONE OUTLIERS
 
-# (variabile dipendente) price
-summary(airbnb_numerico$price)
-hist(airbnb_numerico$price, xlim=c(0,10000), breaks = 200)
-print(max(airbnb_dummy$price)) #10000
-print(mean(airbnb_dummy$price)) #152.7551
+# Calcolo della media e della deviazione standard della variabile dipendente
+mean_value <- mean(airbnb_dummy$price)
+sd_value <- sd(airbnb_dummy$price)
 
-# rimuoviamo le celle contenenti prezzo maggiori di 2000 (per ora)
-airbnb <- airbnb[airbnb$price < 2000, ]
+# Calcolo del limite superiore per gli outliers
+upper_limit <- mean_value + 2 * sd_value
 
-#reviews_per_month
-hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
-print(max(airbnb_dummy$reviews_per_month)) #58.5
-print(mean(airbnb_dummy$reviews_per_month)) #1.01
+# Identificazione degli outliers
+outliers <- dataset$variable[dataset$variable > upper_limit]
 
-#reviews_per_month
-hist(airbnb_dummy$reviews_per_month, xlim=c(0,20), breaks = 200)
-print(max(airbnb_dummy$reviews_per_month)) #58.5
-print(mean(airbnb_dummy$reviews_per_month)) #1.01
+# Rimozione degli outliers
+clean_dataset <- dataset[dataset$variable <= upper_limit, ]
 
-# rimuoviamo le celle contenenti reviews per month maggiori di 10
-airbnb <- airbnb[airbnb$reviews_per_month < 10, ]
 
 
 #---------------------------------------------------------------#
@@ -507,4 +496,4 @@ print (coef (best_elastic)[,1])
 
 #TODO: 
 #BOMBARDARE OUTLIERS
-#Metodi di regolarizzazione
+#Test Metodi di regolarizzazione
