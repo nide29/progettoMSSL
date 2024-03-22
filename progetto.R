@@ -72,10 +72,6 @@ upper_limit <- mean_value + 2 * std_dev
 outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
 airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
 
-#---
-
-
-
 #---------------------------------------------------------------#
 #modello lineare che tiene in considerazione tutti i regressori
 model <- lm(formula = airbnb_final$price ~ ., data = airbnb_final)
