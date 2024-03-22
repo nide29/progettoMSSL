@@ -419,7 +419,7 @@ print(min_mse)
 
 #Addestramento del modello lasso finale con il miglior lambda 
 best_lambda <- cross_lasso$lambda.min
-best_lasso <- glmnet(X, y, nflods=10, alpha=1, lambda=best_lambda)
+best_lasso <- glmnet(X, y, nfolds=10, alpha=1, lambda=best_lambda)
 print (coef (best_lasso)[,1])
 
 print(best_lambda)
@@ -459,7 +459,7 @@ print(best_lambda1)
 min_MSE <- min(elastic_crossval$cvm)
 print(min_MSE)
 
-best_elastic <- glmnet(X, y, nflods=10, alpha=0.2, lambda=best_lambda1)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.2, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 #alpha = 0.4
@@ -469,7 +469,7 @@ best_lambda1 <- elastic_crossval$lambda.min
 print(best_lambda1)
 min_MSE <- min(elastic_crossval$cvm)
 print(min_MSE)
-best_elastic <- glmnet(X, y, nflods=10, alpha=0.4, lambda=best_lambda1)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.4, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 #alpha = 0.6
@@ -479,8 +479,9 @@ best_lambda1 <- elastic_crossval$lambda.min
 print(best_lambda1)
 min_MSE <- min(elastic_crossval$cvm)
 print(min_MSE)
-best_elastic <- glmnet(X, y, nflods=10, alpha=0.6, lambda=best_lambda1)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.6, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
+
 #alpha = 0.8
 elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 10, alpha=0.8)
 plot(elastic_crossval)
@@ -488,9 +489,7 @@ best_lambda1 <- elastic_crossval$lambda.min
 print(best_lambda1)
 min_MSE <- min(elastic_crossval$cvm)
 print(min_MSE)
-best_elastic <- glmnet(X, y, nflods=10, alpha=0.8, lambda=best_lambda1)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.8, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
-#TODO: 
-
-
+#TODO:
