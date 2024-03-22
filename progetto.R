@@ -390,12 +390,14 @@ plot(rr, main = "Ridge regression",  xvar = "lambda")
 # Creazione del modello con cross-validation attraverso la funzione cv di glmnet
 crossval_model <- cv.glmnet(X, y, nfolds = 10, alpha = 0) 
 plot(crossval_model)
-best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
-print(paste("Best Lambda:", best_lambda))
 
-# Addestramento del modello ridge finale con il miglior lambda
+#min mse
 min_mse <- min(crossval_model$cvm)
 print(paste("Minimum MSE:", min_mse))
+
+# Addestramento del modello ridge finale con il miglior lambda
+best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
+print(paste("Best Lambda:", best_lambda))
 final_model <- glmnet(X, y, nfolds=10, alpha = 0, lambda = best_lambda)
 
 #La stima del modello ridge risultante
@@ -421,8 +423,8 @@ print(min_mse)
 best_lambda <- cross_lasso$lambda.min
 best_lasso <- glmnet(X, y, nfolds=10, alpha=1, lambda=best_lambda)
 print (coef (best_lasso)[,1])
-
 print(best_lambda)
+
 #La stima del modello lasso risultante
 coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
 print(coefficients[,1])
@@ -492,4 +494,202 @@ print(min_MSE)
 best_elastic <- glmnet(X, y, nfolds=10, alpha=0.8, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
-#TODO:
+
+#5-fold cross validation
+set.seed(123) 
+
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
+new_grid = 5^seq (5,-4, length = 50)
+
+#RIDGE REGRESSION
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+plot(rr, main = "Ridge regression",  xvar = "lambda")
+crossval_model <- cv.glmnet(X, y, nfolds = 5, alpha = 0) 
+plot(crossval_model)
+min_mse <- min(crossval_model$cvm)
+print(paste("Minimum MSE:", min_mse))
+best_lambda <- crossval_model$lambda.min 
+print(paste("Best Lambda:", best_lambda))
+final_model <- glmnet(X, y, nfolds=5, alpha = 0, lambda = best_lambda)
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#LASSO REGRESSION
+new_grid = 5^seq (4,-4, length = 50)
+model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+new_grid_lasso <- 5^seq(4, -4, length = 200)
+cross_lasso= cv.glmnet( X, y, nfolds= 5, lambda = new_grid_lasso, alpha=1 )
+plot(cross_lasso,  main="MSE Lasso Regression", xvar="lambda", label = TRUE)
+min_mse <- min(cross_lasso$cvm)
+print(min_mse)
+best_lambda <- cross_lasso$lambda.min
+best_lasso <- glmnet(X, y, nfolds=5, alpha=1, lambda=best_lambda)
+print (coef (best_lasso)[,1])
+print(best_lambda)
+coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#ELASTIC NET REGRESSION
+set.seed(123)
+new_grid_elastic <- 5^seq(3, -3, length = 200)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic))
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic)[,1])
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.6, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.8, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+lambda_values <- 5^seq(3, -3, length = 200)
+
+#alpha = 0.2
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.2)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.2, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.4
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.4)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.4, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.6
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.6)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.6, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.8
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.8)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.8, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+
+#leave-one-out cross validation
+set.seed(123) 
+
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
+new_grid = 5^seq (5,-4, length = 50)
+obs <- nrow(X) #numero di osservazioni
+
+#RIDGE REGRESSION
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+plot(rr, main = "Ridge regression",  xvar = "lambda")
+crossval_model <- cv.glmnet(X, y, nfolds = obs, alpha = 0) 
+plot(crossval_model)
+min_mse <- min(crossval_model$cvm)
+print(paste("Minimum MSE:", min_mse))
+best_lambda <- crossval_model$lambda.min 
+print(paste("Best Lambda:", best_lambda))
+final_model <- glmnet(X, y, nfolds=obs, alpha = 0, lambda = best_lambda)
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#LASSO REGRESSION
+new_grid = 5^seq (4,-4, length = 50)
+model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+new_grid_lasso <- 5^seq(4, -4, length = 200)
+cross_lasso= cv.glmnet( X, y, nfolds=obs, lambda = new_grid_lasso, alpha=1 )
+plot(cross_lasso,  main="MSE Lasso Regression", xvar="lambda", label = TRUE)
+min_mse <- min(cross_lasso$cvm)
+print(min_mse)
+best_lambda <- cross_lasso$lambda.min
+best_lasso <- glmnet(X, y, nfolds=obs, alpha=1, lambda=best_lambda)
+print (coef (best_lasso)[,1])
+print(best_lambda)
+coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#ELASTIC NET REGRESSION
+set.seed(123)
+new_grid_elastic <- 5^seq(3, -3, length = 200)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic))
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic)[,1])
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.6, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.8, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+lambda_values <- 5^seq(3, -3, length = 200)
+
+#alpha = 0.2
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.2)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.2, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.4
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.4)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.4, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.6
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.6)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.6, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.8
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.8)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.8, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+
+
