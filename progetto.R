@@ -72,25 +72,30 @@ upper_limit <- mean_value + 2 * std_dev
 outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
 airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
 
+print(mean_value)
+print(upper_limit)
 #---------------------------------------------------------------#
 #modello lineare che tiene in considerazione tutti i regressori
 model <- lm(formula = airbnb_final$price ~ ., data = airbnb_final)
 summary(model)
 
+#istogramma della variabile dipendente
+hist(airbnb_final$price, main = "Istogramma della variabile dipendente [price]")
+
+summary(airbnb_final$price)
+
 # matrice di correlazione
-matrice_correlazione <- cor(airbnb_final)
-corrplot(matrice_correlazione, method = "circle")
+correlazione <- cor(airbnb_final)
+corrplot(correlazione, method = "number")
 
 # determinante della matrice XtX
-X <- as.matrix(cbind(rep(1, nrow(airbnb_final)), airbnb_final$minimum_nights, airbnb_final$number_of_reviews, airbnb_final$reviews_per_month, airbnb_final$calculated_host_listings_count, airbnb_final$availability_365, airbnb_final$NB_brooklyn, airbnb_final$NB_queens, airbnb_final$NB_statenisland, airbnb_final$NB_bronx, airbnb_final$RM_private, airbnb_final$RM_shared))
+X <- as.matrix(cbind(rep(1, nrow(airbnb_final)), airbnb_final))
 determinante <- det(t(X) %*% X)
 print(determinante)
 
 # conditional number
 autoval<-eigen(t(X)%*%X)
 condition.number<-sqrt(max(autoval$values)/min(autoval$values))
-print(autoval$values)
-print(autoval$vectors)
 print(condition.number)
 print(max(autoval$values))
 print(min(autoval$values))
@@ -103,7 +108,6 @@ toleranceValue <- 1/vif(model)
 print(toleranceValue)
 
 
-set.seed(123)
 #Verifica della presenza dell'eteroschedasticità dal punto di vista grafico
 residui <- residuals(model)
 ordinate_stimate <- fitted(model)
