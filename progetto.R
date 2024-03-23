@@ -6,10 +6,11 @@
 library(tidyverse)
 library(corrplot)
 library(car)
+library(lmtest)
 
 # Lettura del dataset (AirBnb Data)
-file_path <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
-file_path_A <- "/Users/alessandro/Library/CloudStorage/OneDrive-UniversitàdellaCalabria/Alex/Università/Magistrale/1 ANNO/Modelli Statistici e Statistical Learning/progetto/AB_NYC_2019.csv"
+#file_path <- "/Users/vincenzopresta/Desktop/mssl/progettoMSSL/AB_NYC_2019.csv"
+file_path <- "/Users/alessandro/Library/CloudStorage/OneDrive-UniversitàdellaCalabria/Alex/Università/Magistrale/1 ANNO/Modelli Statistici e Statistical Learning/progetto/AB_NYC_2019.csv"
 airbnb <- read.csv(file_path)
 
 dim(airbnb) #mostra la dimensione del dataset
@@ -98,8 +99,25 @@ vif(model)
 toleranceValue <- 1/vif(model)
 print(toleranceValue)
 
+
 # TODO ETEROSESSUALITA'
 #Verifica della presenza dell'eteroschedasticità
 resmodel1 <- resid(model)
 fitresmodel1 <- fitted(model)
 plot(fitresmodel1, resmodel1)
+
+#Verifica della presenza dell'eteroschedasticità dal punto di vista grafico
+residui <- residuals(model)
+ordinate_stimate <- fitted(model)
+
+
+# Crea il grafico dei residui rispetto alle ordinate stimate
+plot(ordinate_stimate, residui,
+     xlab = "Ordinate stimate",
+     ylab = "Residui",
+     main = "Grafico dei residui rispetto alle ordinate stimate")
+
+# Test di Breusch-Pagan
+bp_test <- bptest(model)
+print(bp_test)
+
