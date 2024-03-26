@@ -112,7 +112,6 @@ print(toleranceValue)
 residui <- residuals(model)
 ordinate_stimate <- fitted(model)
 
-
 # Crea il grafico dei residui rispetto alle ordinate stimate
 plot(ordinate_stimate, residui,
      xlab = "Ordinate stimate",
@@ -155,7 +154,7 @@ fit1<-fitted(model_log_lin); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
-#Procedere al modello pesato per le ordinate stimate(i regressori vengono divisi per le ordinate stimate)
+#modello pesato per le ordinate stimate
 airbnb_w <- airbnb_final
 
 # Dividere tutti i regressori per le ordinate stimate
@@ -213,12 +212,12 @@ residui <- residuals(wModel_regressor)
 
 plot(fittedM, residui)
 
-# Test di Breusch-Pagan per il modello pesato rispetto al regressore minimum nights
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore number_of_reviews 
 res1 <- residuals(wModel_regressor); res12<- res1^2
 modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$number_of_reviews)
 summary(modBPtest)
 
-#Test di White per il modello pesato  rispetto al regressore minimum nights
+#Test di White per il modello pesato  rispetto al regressore number_of_reviews
 fit1<-fitted(wModel_regressor); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
@@ -228,6 +227,11 @@ summary(modWtest)
 #Modello pesato per il regressore reviews_per_month
 wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$reviews_per_month)
 summary(wModel_regressor)
+
+fittedM <- fitted(wModel_regressor)
+residui <- residuals(wModel_regressor)
+
+plot(fittedM, residui)
 
 
 # Test di Breusch-Pagan per il modello pesato rispetto al regressore reviews_per_month
