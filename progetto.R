@@ -55,31 +55,44 @@ head(airbnb)
 # rimuoviamo le celle contenenti prezzo pari a zero
 airbnb <- airbnb[airbnb$price != 0, ]
 
-
 # creiamo un nuovo dataframe in cui sono presenti solamente gli attributi significativi per la nostra analisi
 airbnb_numerico <- subset(airbnb, select = -c(id, host_id, latitude, longitude, name, host_name, neighbourhood_group, neighbourhood, room_type, last_review))
 
-# combattiamo la trappola delle dummy
-airbnb_dummytrap <- subset(airbnb_numerico, select = -c(NB_manhattan, RM_entire))
-matrice_correlazione <- cor(airbnb_dummytrap)
+# trappola delle dummy
+airbnb_dummy <- subset(airbnb_numerico, select = -c(NB_manhattan, RM_entire))
+matrice_correlazione <- cor(airbnb_dummy)
 corrplot(matrice_correlazione, method = "circle")
 
-# istogramma della variabile dipendente price
-hist(airbnb_numerico$price, xlim=c(0,1250), breaks = 200)
-boxplot(airbnb_numerico$price)
-plot(density(airbnb_numerico$price))
-summary(airbnb_numerico$price)
 
+#PROCESSO DI RIMOZIONE OUTLIERS
+
+#-PRICE - Variabile dipendente
+mean_value <- mean(airbnb_dummy$price)
+std_dev <- sd(airbnb_dummy$price)
+upper_limit <- mean_value + 2 * std_dev
+outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
+airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
+
+
+#grafici per mostrare la rimozione di outlier
+hist(airbnb_dummy$price, breaks = 200) #pre rimozione
+plot(airbnb_dummy$price, ylab="price") #pre rimozione
+
+hist(airbnb_final$price) #post rimozione
+plot(airbnb_final$price, ylab="price") #post rimozione
+
+
+###################################################################################################################################################################
 #modello lineare che tiene in considerazione tutti i regressori
-model <- lm(formula = airbnb_dummytrap$price ~ ., data = airbnb_dummytrap)
+model <- lm(formula = airbnb_final$price ~ ., data = airbnb_final)
 summary(model)
 
 # matrice di correlazione
-matrice_correlazione <- cor(airbnb_numerico)
-corrplot(matrice_correlazione, method = "circle")
+matrice_correlazione <- cor(airbnb_final)
+corrplot(matrice_correlazione, method = "number")
 
 # determinante della matrice XtX
-X <- as.matrix(cbind(rep(1, nrow(airbnb_dummytrap)), airbnb_dummytrap$minimum_nights, airbnb_dummytrap$number_of_reviews, airbnb_dummytrap$reviews_per_month, airbnb_dummytrap$calculated_host_listings_count, airbnb_dummytrap$availability_365, airbnb_dummytrap$NB_brooklyn, airbnb_dummytrap$NB_queens, airbnb_dummytrap$NB_statenisland, airbnb_dummytrap$NB_bronx, airbnb_dummytrap$RM_private, airbnb_dummytrap$RM_shared))
+X <- as.matrix(cbind(rep(1, nrow(airbnb_final)), airbnb_final$minimum_nights, airbnb_final$number_of_reviews, airbnb_final$reviews_per_month, airbnb_final$calculated_host_listings_count, airbnb_final$availability_365, airbnb_final$NB_brooklyn, airbnb_final$NB_queens, airbnb_final$NB_statenisland, airbnb_final$NB_bronx, airbnb_final$RM_private, airbnb_final$RM_shared))
 determinante <- det(t(X) %*% X)
 print(determinante)
 
@@ -100,11 +113,15 @@ toleranceValue <- 1/vif(model)
 print(toleranceValue)
 
 
+
 # TODO ETEROSESSUALITA'
 #Verifica della presenza dell'eteroschedasticità
 resmodel1 <- resid(model)
 fitresmodel1 <- fitted(model)
 plot(fitresmodel1, resmodel1)
+
+
+set.seed(123)
 
 #Verifica della presenza dell'eteroschedasticità dal punto di vista grafico
 residui <- residuals(model)
@@ -120,4 +137,579 @@ plot(ordinate_stimate, residui,
 # Test di Breusch-Pagan
 bp_test <- bptest(model)
 print(bp_test)
+
+res1 <- residuals(model); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = airbnb_final)
+summary(modBPtest)
+
+#Test di White
+fit1<-fitted(model); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+# Trasformazione logaritmica alla variabile dipendente
+model_log_lin <- lm(formula = log(airbnb_final$price) ~ ., data = airbnb_final)
+summary(model_log_lin)
+
+#Nota: Con la trasf logaritmica alla variabile dipendente il modello migliora in termini di R squared e adj- r squared
+
+#Verifica della presenza dell'eteroschedasticità dal punto di vista grafico 2
+residui_log <- residuals(model_log_lin)
+log_fitted <- fitted(model_log_lin)
+
+# Crea il grafico 
+plot(log_fitted, residui_log,
+     xlab = "Fitted",
+     ylab = "Residui",
+     main = "Residui vs Log fitted")
+
+# Test di Breusch-Pagan
+res1 <- residuals(model_log_lin); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = airbnb_final)
+summary(modBPtest)
+
+#Test di White
+fit1<-fitted(model_log_lin); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#Procedere al modello pesato per le ordinate stimate(i regressori vengono divisi per le ordinate stimate)
+airbnb_w <- airbnb_final
+
+# Dividere tutti i regressori per le ordinate stimate
+airbnb_w[-1] <- airbnb_w[-1] / fitted(model)
+
+wModel <- lm(formula = price ~ ., data = airbnb_w)
+summary(wModel)
+
+fittedM <- fitted(wModel)
+residui <- residuals(wModel)
+
+plot(fittedM, residui)
+
+# Test di Breusch-Pagan per il modello pesato 
+res1 <- residuals(wModel); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = airbnb_w)
+summary(modBPtest)
+
+#Test di White per il modello pesato 
+fit1<-fitted(wModel); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#A questo punto bisogna pesare il modello per ogni regressore e cercare di eliminare l'eteroschedasticità
+wAirbnb_regressor <- airbnb_final
+
+#Modello pesato per il regressore minimum_nights
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$minimum_nights)
+summary(wModel_regressor)
+
+fittedM <- fitted(wModel_regressor)
+residui <- residuals(wModel_regressor)
+
+plot(fittedM, residui)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore minimum nights
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$minimum_nights)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore minimum nights
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore number_of_reviews
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$number_of_reviews)
+summary(wModel_regressor)
+
+fittedM <- fitted(wModel_regressor)
+residui <- residuals(wModel_regressor)
+
+plot(fittedM, residui)
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore minimum nights
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$number_of_reviews)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore minimum nights
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore reviews_per_month
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$reviews_per_month)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore reviews_per_month
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$reviews_per_month)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore reviews_per_month
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore calculated_host_listings_count
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore calculated_host_listings_count
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore calculated_host_listings_count
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore availability_365
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$availability_365)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore availability_365
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$calculated_host_listings_count)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore availability_365
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_brooklyn
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_brooklyn)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_brooklyn
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_brooklyn)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_brooklyn
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_queens
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_queens
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_queens)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_queens
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore NB_statenisland
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_statenisland)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_statenisland
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_statenisland)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_statenisland
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore NB_bronx
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_bronx)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore NB_bronx
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$NB_bronx)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore NB_bronx
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#---
+
+#Modello pesato per il regressore RM_private
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_private)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore RM_private
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_private)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore RM_private
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+
+#---
+
+#Modello pesato per il regressore RM_shared
+wModel_regressor <- lm(formula = price ~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_shared)
+summary(wModel_regressor)
+
+
+# Test di Breusch-Pagan per il modello pesato rispetto al regressore RM_shared
+res1 <- residuals(wModel_regressor); res12<- res1^2
+modBPtest <- lm(formula = res12~ ., data = wAirbnb_regressor, weights = wAirbnb_regressor$RM_shared)
+summary(modBPtest)
+
+#Test di White per il modello pesato  rispetto al regressore RM_shared
+fit1<-fitted(wModel_regressor); fit12<-fit1^2
+modWtest <- lm(res12~fit1+fit12)
+summary(modWtest)
+
+#RIDGE REGRESSION
+library(glmnet)
+set.seed(123) 
+
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
+new_grid = 10^seq (5,-4, length = 100)
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+
+plot(rr, main = "Ridge regression",  xvar = "lambda")
+
+#Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
+# Creazione del modello con cross-validation attraverso la funzione cv di glmnet
+crossval_model <- cv.glmnet(X, y, nfolds = 10, alpha = 0) 
+plot(crossval_model)
+
+#min mse
+min_mse <- min(crossval_model$cvm)
+print(paste("Minimum MSE:", min_mse))
+
+# Addestramento del modello ridge finale con il miglior lambda
+best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
+print(paste("Best Lambda:", best_lambda))
+final_model <- glmnet(X, y, nfolds=10, alpha = 0, lambda = best_lambda)
+
+#La stima del modello ridge risultante
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#LASSO REGRESSION
+new_grid = 10^seq (4,-4, length = 100)
+model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+
+#Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
+set.seed(123)
+new_grid_lasso <- 10^seq(4, -4, length = 200)
+cross_lasso= cv.glmnet( X, y, nfolds= 10, lambda = new_grid_lasso, alpha=1 )
+plot(cross_lasso,  main="MSE Lasso Regression", xvar="lambda", label = TRUE)
+
+#min mse
+min_mse <- min(cross_lasso$cvm)
+print(min_mse)
+
+#Addestramento del modello lasso finale con il miglior lambda 
+best_lambda <- cross_lasso$lambda.min
+best_lasso <- glmnet(X, y, nfolds=10, alpha=1, lambda=best_lambda)
+print (coef (best_lasso)[,1])
+print(best_lambda)
+
+#La stima del modello lasso risultante
+coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#ELASTIC NET REGRESSION
+set.seed(123)
+new_grid_elastic <- 10^seq(3, -3, length = 200)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic))
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic)[,1])
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.6, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.8, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+
+#Cross val 
+# Imposta una sequenza di valori di lambda 
+set.seed(123)
+lambda_values <- 10^seq(3, -3, length = 200)
+
+#alpha = 0.2
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 10, alpha=0.2)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.2, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.4
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 10, alpha=0.4)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.4, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.6
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 10, alpha=0.6)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.6, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.8
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 10, alpha=0.8)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=10, alpha=0.8, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+
+#5-fold cross validation
+set.seed(123) 
+
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
+new_grid = 5^seq (5,-4, length = 50)
+
+#RIDGE REGRESSION
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+plot(rr, main = "Ridge regression",  xvar = "lambda")
+crossval_model <- cv.glmnet(X, y, nfolds = 5, alpha = 0) 
+plot(crossval_model)
+min_mse <- min(crossval_model$cvm)
+print(paste("Minimum MSE:", min_mse))
+best_lambda <- crossval_model$lambda.min 
+print(paste("Best Lambda:", best_lambda))
+final_model <- glmnet(X, y, nfolds=5, alpha = 0, lambda = best_lambda)
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#LASSO REGRESSION
+new_grid = 5^seq (4,-4, length = 50)
+model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+new_grid_lasso <- 5^seq(4, -4, length = 200)
+cross_lasso= cv.glmnet( X, y, nfolds= 5, lambda = new_grid_lasso, alpha=1 )
+plot(cross_lasso,  main="MSE Lasso Regression", xvar="lambda", label = TRUE)
+min_mse <- min(cross_lasso$cvm)
+print(min_mse)
+best_lambda <- cross_lasso$lambda.min
+best_lasso <- glmnet(X, y, nfolds=5, alpha=1, lambda=best_lambda)
+print (coef (best_lasso)[,1])
+print(best_lambda)
+coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#ELASTIC NET REGRESSION
+set.seed(123)
+new_grid_elastic <- 5^seq(3, -3, length = 200)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic))
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic)[,1])
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.6, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.8, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+lambda_values <- 5^seq(3, -3, length = 200)
+
+#alpha = 0.2
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.2)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.2, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.4
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.4)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.4, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.6
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.6)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.6, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.8
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.8)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=5, alpha=0.8, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+
+#leave-one-out cross validation
+set.seed(123) 
+
+X<-as.matrix(airbnb_final[,-1])
+y <- airbnb_final$price
+new_grid = 5^seq (5,-4, length = 50)
+obs <- nrow(X) #numero di osservazioni
+
+#RIDGE REGRESSION
+rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+plot(rr, main = "Ridge regression",  xvar = "lambda")
+crossval_model <- cv.glmnet(X, y, nfolds = obs, alpha = 0) 
+plot(crossval_model)
+min_mse <- min(crossval_model$cvm)
+print(paste("Minimum MSE:", min_mse))
+best_lambda <- crossval_model$lambda.min 
+print(paste("Best Lambda:", best_lambda))
+final_model <- glmnet(X, y, nfolds=obs, alpha = 0, lambda = best_lambda)
+coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#LASSO REGRESSION
+new_grid = 5^seq (4,-4, length = 50)
+model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+new_grid_lasso <- 5^seq(4, -4, length = 200)
+cross_lasso= cv.glmnet( X, y, nfolds=obs, lambda = new_grid_lasso, alpha=1 )
+plot(cross_lasso,  main="MSE Lasso Regression", xvar="lambda", label = TRUE)
+min_mse <- min(cross_lasso$cvm)
+print(min_mse)
+best_lambda <- cross_lasso$lambda.min
+best_lasso <- glmnet(X, y, nfolds=obs, alpha=1, lambda=best_lambda)
+print (coef (best_lasso)[,1])
+print(best_lambda)
+coefficients <- coef(best_lasso, s = best_lambda, exact = TRUE)
+print(coefficients[,1])
+
+#ELASTIC NET REGRESSION
+set.seed(123)
+new_grid_elastic <- 5^seq(3, -3, length = 200)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic))
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+print(coef(model_elastic)[,1])
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.6, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.8, standardize=FALSE)
+plot(model_elastic, xvar="lambda", label=TRUE)
+
+lambda_values <- 5^seq(3, -3, length = 200)
+
+#alpha = 0.2
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.2)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.2, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.4
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.4)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.4, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.6
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.6)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.6, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
+
+#alpha = 0.8
+elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds=obs, alpha=0.8)
+plot(elastic_crossval)
+best_lambda1 <- elastic_crossval$lambda.min
+print(best_lambda1)
+min_MSE <- min(elastic_crossval$cvm)
+print(min_MSE)
+best_elastic <- glmnet(X, y, nfolds=obs, alpha=0.8, lambda=best_lambda1)
+print (coef (best_elastic)[,1])
 
