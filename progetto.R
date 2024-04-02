@@ -70,9 +70,10 @@ mean_value <- mean(airbnb_dummy$price)
 std_dev <- sd(airbnb_dummy$price)
 upper_limit <- mean_value + 2 * std_dev
 outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
+
 airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
 
-airbnb_new <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ] # questo dataset ci servirà per le tecniche di regolarizzazione
+airbnb_new <- airbnb_numerico[airbnb_numerico$price <= upper_limit, ] # questo dataset ci servirà per le tecniche di regolarizzazione
 
 plot(airbnb_dummy$price) #distribuzione di price prima della rimozione degli outliers
 
@@ -297,6 +298,7 @@ summary(modWtest)
  ##########################################################################################################################################################################
 #---TECNICHE DI REGOLARIZZAZIONE---# 
 
+#------10 FOLDS------#
 #RIDGE REGRESSION
 library(glmnet)
 set.seed(123) 
@@ -420,7 +422,7 @@ best_elastic <- glmnet(X, y, nfolds=10, alpha=0.8, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 
-#5-fold cross validation
+#------5 FOLD------#
 set.seed(123) 
 
 X<-as.matrix(airbnb_final[,-1])
@@ -520,7 +522,7 @@ best_elastic <- glmnet(X, y, nfolds=5, alpha=0.8, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 
-#leave-one-out cross validation
+#------LOO------#
 set.seed(123) 
 
 X<-as.matrix(airbnb_final[,-1])
