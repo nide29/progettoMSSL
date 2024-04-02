@@ -72,6 +72,8 @@ upper_limit <- mean_value + 2 * std_dev
 outliers <- airbnb_dummy$price[airbnb_dummy$price > upper_limit]
 airbnb_final <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ]
 
+airbnb_new <- airbnb_dummy[airbnb_dummy$price <= upper_limit, ] # questo dataset ci servirà per le tecniche di regolarizzazione
+
 plot(airbnb_dummy$price) #distribuzione di price prima della rimozione degli outliers
 
 print(mean_value)
@@ -292,18 +294,22 @@ fit1<-fitted(wModel_regressor); fit12<-fit1^2
 modWtest <- lm(res12~fit1+fit12)
 summary(modWtest)
 
+##########################################################################################################################################################################
 #---TECNICHE DI REGOLARIZZAZIONE---#  
 
 #RIDGE REGRESSION
 library(glmnet)
 set.seed(123) 
 
-X<-as.matrix(airbnb_final[,-1])
-y <- airbnb_final$price
+X <- as.matrix(airbnb_new[,-1]) # in questo modo rimuoviamo la prima colonna dal dataset (ovvero la variabile dipendente price)
+y <- airbnb_new$price
+#X<-as.matrix(airbnb_final[,-1]) # errore porcacciodio
+#y <- airbnb_final$price
+
 new_grid = 10^seq (5,-4, length = 100)
 rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+plot(rr, main = "Ridge regression",  xvar = "lambda", ylim=c(-150,10))
 
-plot(rr, main = "Ridge regression",  xvar = "lambda")
 
 #Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
 # Creazione del modello con cross-validation attraverso la funzione cv di glmnet
@@ -314,9 +320,11 @@ plot(crossval_model)
 min_mse <- min(crossval_model$cvm)
 print(paste("Minimum MSE:", min_mse))
 
-# Addestramento del modello ridge finale con il miglior lambda
-best_lambda <- crossval_model$lambda.min # Ricerca del valore di lambda ottimale
+#best lambda
+best_lambda <- crossval_model$lambda.min# Ricerca del valore di lambda ottimale
 print(paste("Best Lambda:", best_lambda))
+
+# Addestramento del modello ridge finale con il miglior lambda
 final_model <- glmnet(X, y, nfolds=10, alpha = 0, lambda = best_lambda)
 
 #La stima del modello ridge risultante
@@ -326,7 +334,7 @@ print(coefficients[,1])
 #LASSO REGRESSION
 new_grid = 10^seq (4,-4, length = 100)
 model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
-plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE, ylim=c(-1, 1))
 
 #Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
 set.seed(123)
@@ -471,6 +479,7 @@ plot(model_elastic, xvar="lambda", label=TRUE)
 lambda_values <- 5^seq(3, -3, length = 200)
 
 #alpha = 0.2
+set.seed(123)
 elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.2)
 plot(elastic_crossval)
 best_lambda1 <- elastic_crossval$lambda.min
@@ -482,6 +491,7 @@ best_elastic <- glmnet(X, y, nfolds=5, alpha=0.2, lambda=best_lambda1)
 print (coef (best_elastic)[,1])
 
 #alpha = 0.4
+set.seed(123)
 elastic_crossval = cv.glmnet(X, y, lambda = lambda_values, nfolds = 5, alpha=0.4)
 plot(elastic_crossval)
 best_lambda1 <- elastic_crossval$lambda.min
@@ -534,6 +544,7 @@ coefficients <- coef(final_model, s = best_lambda, exact = TRUE)
 print(coefficients[,1])
 
 #LASSO REGRESSION
+set.seed(123) 
 new_grid = 5^seq (4,-4, length = 50)
 model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
 plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
