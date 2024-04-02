@@ -298,7 +298,7 @@ set.seed(123)
 X<-as.matrix(airbnb_final[,-1])
 y <- airbnb_final$price
 new_grid = 10^seq (5,-4, length = 100)
-rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
+rr = glmnet (X, y , alpha=0,lambda=new_grid,standardize=FALSE)
 
 plot(rr, main = "Ridge regression",  xvar = "lambda")
 
