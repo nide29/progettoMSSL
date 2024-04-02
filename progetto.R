@@ -308,7 +308,7 @@ y <- airbnb_new$price
 
 new_grid = 10^seq (5,-4, length = 100)
 rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
-plot(rr, main = "Ridge regression",  xvar = "lambda", ylim=c(-150,10))
+plot(rr, main = "Ridge regression",  xvar = "lambda")
 
 
 #Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
@@ -334,7 +334,7 @@ print(coefficients[,1])
 #LASSO REGRESSION
 new_grid = 10^seq (4,-4, length = 100)
 model_lasso <- glmnet(X,y, lambda = new_grid, alpha = 1, standardize = FALSE)
-plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE, ylim=c(-1, 1))
+plot(model_lasso, main="Lasso regression", xvar="lambda", label = TRUE)
 
 #Cerchiamo il valore di lambda ottimale al fine di minimizzare l'errore quadratico medio (MSE)
 set.seed(123)
@@ -425,7 +425,7 @@ print (coef (best_elastic)[,1])
 #------5 FOLD------#
 set.seed(123) 
 
-X<-as.matrix(airbnb_final[,-1])
+X<-as.matrix(airbnb_new[,-1])
 y <- airbnb_final$price
 new_grid = 5^seq (5,-4, length = 50)
 
@@ -525,7 +525,7 @@ print (coef (best_elastic)[,1])
 #------LOO------#
 set.seed(123) 
 
-X<-as.matrix(airbnb_final[,-1])
+X<-as.matrix(airbnb_new[,-1])
 y <- airbnb_final$price
 new_grid = 5^seq (5,-4, length = 50)
 obs <- nrow(X) #numero di osservazioni
@@ -566,7 +566,7 @@ new_grid_elastic <- 5^seq(3, -3, length = 200)
 
 model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.2, standardize=FALSE)
 plot(model_elastic, xvar="lambda", label=TRUE)
-print(coef(model_elastic))
+print(coef(model_elastic)[,1])
 
 model_elastic <- glmnet(X, y, lambda = new_grid_elastic, alpha=0.4, standardize=FALSE)
 plot(model_elastic, xvar="lambda", label=TRUE)
