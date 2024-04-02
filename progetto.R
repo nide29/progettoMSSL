@@ -303,8 +303,6 @@ set.seed(123)
 
 X <- as.matrix(airbnb_new[,-1]) # in questo modo rimuoviamo la prima colonna dal dataset (ovvero la variabile dipendente price)
 y <- airbnb_new$price
-#X<-as.matrix(airbnb_final[,-1]) # errore porcacciodio
-#y <- airbnb_final$price
 
 new_grid = 10^seq (5,-4, length = 100)
 rr = glmnet (X, y, alpha=0,lambda=new_grid, standardize=FALSE)
